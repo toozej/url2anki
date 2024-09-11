@@ -1,5 +1,5 @@
 # Cosign
-golang-starter.key
+url2anki.key
 cosign.key
 *.sig
 
@@ -28,3 +28,7 @@ completions/
 manpages/
 docs/
 dist/
+
+# Generated output files
+anki_*.csv
+anki_*.json
