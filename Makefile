@@ -41,24 +41,24 @@ local-release-verify: local-release local-sign local-verify ## Release and verif
 pre-reqs: pre-commit-install ## Install pre-commit hooks and necessary binaries
 
 vet: ## Run `go vet` in Docker
-	docker build --target vet -f $(CURDIR)/Dockerfile -t toozej/golang-starter:latest . 
+	docker build --target vet -f $(CURDIR)/Dockerfile -t toozej/url2anki:latest . 
 
 test: ## Run `go test` in Docker
-	docker build --target test -f $(CURDIR)/Dockerfile -t toozej/golang-starter:latest . 
+	docker build --target test -f $(CURDIR)/Dockerfile -t toozej/url2anki:latest . 
 	@echo -e "\nStatements missing coverage"
 	@grep -v -e " 1$$" c.out
 
 build: ## Build Docker image, including running tests
-	docker build -f $(CURDIR)/Dockerfile -t toozej/golang-starter:latest .
+	docker build -f $(CURDIR)/Dockerfile -t toozej/url2anki:latest .
 
-get-cosign-pub-key: ## Get golang-starter Cosign public key from GitHub
-	test -f $(CURDIR)/golang-starter.pub || curl --silent https://raw.githubusercontent.com/toozej/golang-starter/main/golang-starter.pub -O
+get-cosign-pub-key: ## Get url2anki Cosign public key from GitHub
+	test -f $(CURDIR)/url2anki.pub || curl --silent https://raw.githubusercontent.com/toozej/url2anki/main/url2anki.pub -O
 
 verify: get-cosign-pub-key ## Verify Docker image with Cosign
-	cosign verify --key $(CURDIR)/golang-starter.pub toozej/golang-starter:latest
+	cosign verify --key $(CURDIR)/url2anki.pub toozej/url2anki:latest
 
 run: ## Run built Docker image
-	docker run --rm --name golang-starter -v $(CURDIR)/config:/config toozej/golang-starter:latest
+	docker run --rm --name url2anki -v $(CURDIR)/config:/config toozej/url2anki:latest
 
 up: test build ## Run Docker Compose project with build Docker image
 	docker compose -f docker-compose.yml down --remove-orphans
@@ -69,10 +69,10 @@ down: ## Stop running Docker Compose project
 	docker compose -f docker-compose.yml down --remove-orphans
 
 distroless-build: ## Build Docker image using distroless as final base
-	docker build -f $(CURDIR)/Dockerfile.distroless -t toozej/golang-starter:distroless . 
+	docker build -f $(CURDIR)/Dockerfile.distroless -t toozej/url2anki:distroless . 
 
 distroless-run: ## Run built Docker image using distroless as final base
-	docker run --rm --name golang-starter -v $(CURDIR)/config:/config toozej/golang-starter:distroless
+	docker run --rm --name url2anki -v $(CURDIR)/config:/config toozej/url2anki:distroless
 
 local-update-deps: ## Run `go get -t -u ./...` to update Go module dependencies
 	go get -t -u ./...
@@ -92,36 +92,40 @@ local-cover: ## View coverage report in web browser
 	go tool cover -html=c.out
 
 local-build: ## Run `go build` using locally installed golang toolchain
-	CGO_ENABLED=0 go build -o $(CURDIR)/out/ -ldflags="$(LDFLAGS)"
+	CGO_ENABLED=0 go build -o $(CURDIR)/out/ -ldflags="$(LDFLAGS)" $(CURDIR)/cmd/url2anki/
 
 local-run: ## Run locally built binary
-	$(CURDIR)/out/golang-starter
+	if test -e $(CURDIR)/.env; then \
+		export `cat $(CURDIR)/.env | xargs` && $(CURDIR)/out/url2anki --url https://kubernetes.io/docs/reference/glossary/?all=true --question-selector div.term-name --answer-selector div.term-definition --output-file $(CURDIR)/anki_k8s.csv; $(CURDIR)/out/url2anki --url https://kubernetes.io/docs/reference/glossary/?all=true --question-selector div.term-name --answer-selector div.term-definition --output-file $(CURDIR)/anki_k8s.json; \
+	else \
+		echo "No environment variables found at $(CURDIR)/.env. Cannot run."; \
+	fi
 
 local-release-test: ## Build assets and test goreleaser config using locally installed golang toolchain and goreleaser
 	goreleaser check
 	goreleaser build --rm-dist --snapshot
 
 local-release: local-test docker-login ## Release assets using locally installed golang toolchain and goreleaser
-	if test -e $(CURDIR)/golang-starter.key && test -e $(CURDIR)/.env; then \
+	if test -e $(CURDIR)/url2anki.key && test -e $(CURDIR)/.env; then \
 		export `cat $(CURDIR)/.env | xargs` && goreleaser release --rm-dist; \
 	else \
-		echo "no cosign private key found at $(CURDIR)/golang-starter.key. Cannot release."; \
+		echo "no cosign private key found at $(CURDIR)/url2anki.key. Cannot release."; \
 	fi
 
 local-sign: local-test ## Sign locally installed golang toolchain and cosign
-	if test -e $(CURDIR)/golang-starter.key && test -e $(CURDIR)/.env; then \
-		export `cat $(CURDIR)/.env | xargs` && cosign sign-blob --key=$(CURDIR)/golang-starter.key --output-signature=$(CURDIR)/golang-starter.sig $(CURDIR)/out/golang-starter; \
+	if test -e $(CURDIR)/url2anki.key && test -e $(CURDIR)/.env; then \
+		export `cat $(CURDIR)/.env | xargs` && cosign sign-blob --key=$(CURDIR)/url2anki.key --output-signature=$(CURDIR)/url2anki.sig $(CURDIR)/out/url2anki; \
 	else \
-		echo "no cosign private key found at $(CURDIR)/golang-starter.key. Cannot release."; \
+		echo "no cosign private key found at $(CURDIR)/url2anki.key. Cannot release."; \
 	fi
 
 local-verify: get-cosign-pub-key ## Verify locally compiled binary
 	# cosign here assumes you're using Linux AMD64 binary
-	cosign verify-blob --key $(CURDIR)/golang-starter.pub --signature $(CURDIR)/golang-starter.sig $(CURDIR)/out/golang-starter
+	cosign verify-blob --key $(CURDIR)/url2anki.pub --signature $(CURDIR)/url2anki.sig $(CURDIR)/out/url2anki
 
 install: local-build local-verify ## Install compiled binary to local machine
-	sudo cp $(CURDIR)/out/golang-starter /usr/local/bin/golang-starter
-	sudo chmod 0755 /usr/local/bin/golang-starter
+	sudo cp $(CURDIR)/out/url2anki /usr/local/bin/url2anki
+	sudo chmod 0755 /usr/local/bin/url2anki
 
 docker-login: ## Login to Docker registries used to publish images to
 	if test -e $(CURDIR)/.env; then \
@@ -169,7 +173,7 @@ pre-commit-install: ## Install pre-commit hooks and necessary binaries
 pre-commit-run: ## Run pre-commit hooks against all files
 	pre-commit run --all-files
 	# manually run the following checks since their pre-commits aren't working or don't exist
-	go-licenses report github.com/toozej/golang-starter/cmd/golang-starter
+	go-licenses report github.com/toozej/url2anki/cmd/url2anki
 	govulncheck ./...
 
 update-golang-version: ## Update to latest Golang version across the repo
@@ -180,17 +184,17 @@ update-golang-version: ## Update to latest Golang version across the repo
 docs: docs-generate docs-serve ## Generate and serve documentation
 
 docs-generate:
-	docker build -f $(CURDIR)/Dockerfile.docs -t toozej/golang-starter:docs . 
-	docker run --rm --name golang-starter-docs -v $(CURDIR):/package -v $(CURDIR)/docs:/docs toozej/golang-starter:docs
+	docker build -f $(CURDIR)/Dockerfile.docs -t toozej/url2anki:docs . 
+	docker run --rm --name url2anki-docs -v $(CURDIR):/package -v $(CURDIR)/docs:/docs toozej/url2anki:docs
 
 docs-serve: ## Serve documentation on http://localhost:9000
-	docker run -d --rm --name golang-starter-docs-serve -p 9000:3080 -v $(CURDIR)/docs:/data thomsch98/markserv
+	docker run -d --rm --name url2anki-docs-serve -p 9000:3080 -v $(CURDIR)/docs:/data thomsch98/markserv
 	$(OPENER) http://localhost:9000/docs.md
 	@echo -e "to stop docs container, run:\n"
-	@echo "docker kill golang-starter-docs-serve"
+	@echo "docker kill url2anki-docs-serve"
 
 clean: ## Remove any locally compiled binaries
-	rm -f $(CURDIR)/out/golang-starter
+	rm -f $(CURDIR)/out/url2anki
 
 help: ## Display help text
 	@grep -E '^[a-zA-Z_-]+ ?:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
