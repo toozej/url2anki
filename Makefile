@@ -44,9 +44,7 @@ vet: ## Run `go vet` in Docker
 	docker build --target vet -f $(CURDIR)/Dockerfile -t toozej/url2anki:latest . 
 
 test: ## Run `go test` in Docker
-	docker build --target test -f $(CURDIR)/Dockerfile -t toozej/url2anki:latest . 
-	@echo -e "\nStatements missing coverage"
-	@grep -v -e " 1$$" c.out
+	docker build --progress=plain --target test -f $(CURDIR)/Dockerfile -t toozej/url2anki:latest .
 
 build: ## Build Docker image, including running tests
 	docker build -f $(CURDIR)/Dockerfile -t toozej/url2anki:latest .
