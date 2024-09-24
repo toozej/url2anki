@@ -90,7 +90,7 @@ local-cover: ## View coverage report in web browser
 	go tool cover -html=c.out
 
 local-build: ## Run `go build` using locally installed golang toolchain
-	CGO_ENABLED=0 go build -o $(CURDIR)/out/ -ldflags="$(LDFLAGS)" $(CURDIR)/cmd/url2anki/
+	CGO_ENABLED=0 go build -o $(CURDIR)/out/ -ldflags="$(LDFLAGS)"
 
 local-run: ## Run locally built binary
 	if test -e $(CURDIR)/.env; then \

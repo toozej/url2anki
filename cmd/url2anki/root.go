@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"fmt"
@@ -33,7 +33,7 @@ func rootCmdPreRun(cmd *cobra.Command, args []string) {
 
 }
 
-func main() {
+func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)

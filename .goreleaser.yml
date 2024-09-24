@@ -39,7 +39,7 @@ builds:
     ldflags:
       - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{ .CommitDate
         }} -X main.builtBy=goreleaser
-    main: ./cmd/url2anki/
+    main: ./
     binary: url2anki
 
 universal_binaries:
@@ -234,7 +234,7 @@ nfpms:
     id: packages
     homepage: https://github.com/toozej/url2anki
     description: |-
-      Golang starter template
+      Generate Anki flashcards from a URL
     maintainer: toozej
     license: GPLv3
     vendor: url2anki
