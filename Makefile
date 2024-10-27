@@ -56,7 +56,7 @@ verify: get-cosign-pub-key ## Verify Docker image with Cosign
 	cosign verify --key $(CURDIR)/url2anki.pub toozej/url2anki:latest
 
 run: ## Run built Docker image
-	docker run --rm --name url2anki -v $(CURDIR)/config:/config toozej/url2anki:latest
+	docker run --rm --name url2anki --env-file $(CURDIR)/.env toozej/url2anki:latest
 
 up: test build ## Run Docker Compose project with build Docker image
 	docker compose -f docker-compose.yml down --remove-orphans
@@ -70,7 +70,7 @@ distroless-build: ## Build Docker image using distroless as final base
 	docker build -f $(CURDIR)/Dockerfile.distroless -t toozej/url2anki:distroless . 
 
 distroless-run: ## Run built Docker image using distroless as final base
-	docker run --rm --name url2anki -v $(CURDIR)/config:/config toozej/url2anki:distroless
+	docker run --rm --name url2anki --env-file $(CURDIR)/.env toozej/url2anki:distroless
 
 local-update-deps: ## Run `go get -t -u ./...` to update Go module dependencies
 	go get -t -u ./...
@@ -78,7 +78,8 @@ local-update-deps: ## Run `go get -t -u ./...` to update Go module dependencies
 local-vet: ## Run `go vet` using locally installed golang toolchain
 	go vet $(CURDIR)/...
 
-local-vendor: ## Run `go mod vendor` using locally installed golang toolchain
+local-vendor: ## Run `go mod tidy & vendor` using locally installed golang toolchain
+	go mod tidy
 	go mod vendor
 
 local-test: ## Run `go test` using locally installed golang toolchain
@@ -124,6 +125,9 @@ local-verify: get-cosign-pub-key ## Verify locally compiled binary
 install: local-build local-verify ## Install compiled binary to local machine
 	sudo cp $(CURDIR)/out/url2anki /usr/local/bin/url2anki
 	sudo chmod 0755 /usr/local/bin/url2anki
+
+assert-secrets-gh: ## Assert secrets from .env to GitHub Actions Secrets
+	$(CURDIR)/scripts/upload_secrets_to_github.sh url2anki
 
 docker-login: ## Login to Docker registries used to publish images to
 	if test -e $(CURDIR)/.env; then \
