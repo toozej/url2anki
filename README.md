@@ -12,4 +12,4 @@ Generate Anki flashcards from a URL
 `make` ;)
 
 ## changes required to update golang version
-- run `./scripts/update_golang_version.sh $NEW_VERSION_GOES_HERE`
+- `make update-golang-version`
