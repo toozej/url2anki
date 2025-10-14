@@ -33,6 +33,9 @@ builds:
       - arm64
     goarm:
       - "7"
+    ignore:
+      - goos: windows
+        goarch: arm
     mod_timestamp: '{{ .CommitTimestamp }}'
     flags:
       - -trimpath
@@ -76,142 +79,87 @@ changelog:
     - title: Other work
       order: 9999
 
-dockers:
-  - image_templates:
-      - 'toozej/url2anki:{{ .Tag }}-amd64'
-      - 'ghcr.io/toozej/url2anki:{{ .Tag }}-amd64'
-      - 'quay.io/toozej/url2anki:{{ .Tag }}-amd64'
+dockers_v2:
+  - id: url2anki
+    images:
+      - 'toozej/url2anki'
+      - 'ghcr.io/toozej/url2anki'
+      - 'quay.io/toozej/url2anki'
+    tags:
+      - "v{{ .Version }}"
+      - "{{ .Version }}"
+      - "latest"
     dockerfile: Dockerfile.goreleaser
-    use: buildx
-    build_flag_templates:
-      - "--pull"
-      - "--label=io.artifacthub.package.readme-url=https://raw.githubusercontent.com/toozej/url2anki/main/README.md"
-      - "--label=io.artifacthub.package.maintainers=[{\"name\":\"toozej\"}]"
-      - "--label=io.artifacthub.package.license=GPLv3"
-      - "--label=org.opencontainers.image.description=Golang starter template"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.name={{.ProjectName}}"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
-      - "--label=org.opencontainers.image.source={{.GitURL}}"
-      - "--platform=linux/amd64"
+    labels:
+      "io.artifacthub.package.readme-url": "https://raw.githubusercontent.com/toozej/url2anki/main/README.md"
+      "io.artifacthub.package.maintainers": "[{\"name\":\"toozej\"}]"
+      "io.artifacthub.package.license": "GPLv3"
+      "org.opencontainers.image.description": "Generate Anki flashcards from a URL"
+      "org.opencontainers.image.created": "{{.Date}}"
+      "org.opencontainers.image.name": "{{.ProjectName}}"
+      "org.opencontainers.image.revision": "{{.FullCommit}}"
+      "org.opencontainers.image.version": "{{.Version}}"
+      "org.opencontainers.image.source": "{{.GitURL}}"
+      "org.opencontainers.image.authors": "James Tooze https://github.com/toozej/"
+      "org.opencontainers.image.documentation": "https://raw.githubusercontent.com/toozej/url2anki/main/README.md"
+      "org.opencontainers.image.licenses": "GPL-3.0-only"
+      "org.opencontainers.image.title": "{{.ProjectName}}"
+      "org.opencontainers.image.vendor": "James Tooze"
+    annotations:
+      "index,manifest:org.opencontainers.image.authors": "James Tooze https://github.com/toozej/"
+      "index,manifest:org.opencontainers.image.created": "{{.Date}}"
+      "index,manifest:org.opencontainers.image.description": "Generate Anki flashcards from\
+        \ a URL"
+      "index,manifest:org.opencontainers.image.documentation": "https://raw.githubusercontent.com/toozej/url2anki/main/README.md"
+      "index,manifest:org.opencontainers.image.licenses": "GPL-3.0-only"
+      "index,manifest:org.opencontainers.image.revision": "{{.FullCommit}}"
+      "index,manifest:org.opencontainers.image.source": "https://github.com/toozej/url2anki"
+      "index,manifest:org.opencontainers.image.title": "{{.ProjectName}}"
+      "index,manifest:org.opencontainers.image.vendor": "James Tooze"
+      "index,manifest:org.opencontainers.image.version": "{{.Version}}"
     extra_files:
       - scripts/goreleaser_entrypoint.sh
-  - image_templates:
-      - 'toozej/url2anki:{{ .Tag }}-arm64'
-      - 'ghcr.io/toozej/url2anki:{{ .Tag }}-arm64'
-      - 'quay.io/toozej/url2anki:{{ .Tag }}-arm64'
-    dockerfile: Dockerfile.goreleaser
-    use: buildx
-    build_flag_templates:
-      - "--pull"
-      - "--label=io.artifacthub.package.readme-url=https://raw.githubusercontent.com/toozej/url2anki/main/README.md"
-      - "--label=io.artifacthub.package.maintainers=[{\"name\":\"toozej\"}]"
-      - "--label=io.artifacthub.package.license=GPLv3"
-      - "--label=org.opencontainers.image.description=Golang starter template"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.name={{.ProjectName}}"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
-      - "--label=org.opencontainers.image.source={{.GitURL}}"
-      - "--platform=linux/arm64"
-    goarch: arm64
-    extra_files:
-      - scripts/goreleaser_entrypoint.sh
-  - image_templates:
-      - 'toozej/url2anki:{{ .Tag }}-distroless-amd64'
-      - 'ghcr.io/toozej/url2anki:{{ .Tag }}-distroless-amd64'
-      - 'quay.io/toozej/url2anki:{{ .Tag }}-distroless-amd64'
+  - id: url2anki-distroless
+    images:
+      - 'toozej/url2anki'
+      - 'ghcr.io/toozej/url2anki'
+      - 'quay.io/toozej/url2anki'
+    tags:
+      - "v{{ .Version }}-distroless"
+      - "{{ .Version }}-distroless"
+      - "distroless"
     dockerfile: Dockerfile.goreleaser.distroless
-    use: buildx
-    build_flag_templates:
-      - "--pull"
-      - "--label=io.artifacthub.package.readme-url=https://raw.githubusercontent.com/toozej/url2anki/main/README.md"
-      - "--label=io.artifacthub.package.maintainers=[{\"name\":\"toozej\"}]"
-      - "--label=io.artifacthub.package.license=GPLv3"
-      - "--label=org.opencontainers.image.description=Golang starter template"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.name={{.ProjectName}}"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
-      - "--label=org.opencontainers.image.source={{.GitURL}}"
-      - "--platform=linux/amd64"
-    extra_files:
-      - scripts/goreleaser_entrypoint.sh
-  - image_templates:
-      - 'toozej/url2anki:{{ .Tag }}-distroless-arm64'
-      - 'ghcr.io/toozej/url2anki:{{ .Tag }}-distroless-arm64'
-      - 'quay.io/toozej/url2anki:{{ .Tag }}-distroless-arm64'
-    dockerfile: Dockerfile.goreleaser.distroless
-    use: buildx
-    build_flag_templates:
-      - "--pull"
-      - "--label=io.artifacthub.package.readme-url=https://raw.githubusercontent.com/toozej/url2anki/main/README.md"
-      - "--label=io.artifacthub.package.maintainers=[{\"name\":\"toozej\"}]"
-      - "--label=io.artifacthub.package.license=GPLv3"
-      - "--label=org.opencontainers.image.description=Golang starter template"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.name={{.ProjectName}}"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
-      - "--label=org.opencontainers.image.source={{.GitURL}}"
-      - "--platform=linux/arm64"
-    goarch: arm64
+    labels:
+      "io.artifacthub.package.readme-url": "https://raw.githubusercontent.com/toozej/url2anki/main/README.md"
+      "io.artifacthub.package.maintainers": "[{\"name\":\"toozej\"}]"
+      "io.artifacthub.package.license": "GPLv3"
+      "org.opencontainers.image.description": "Generate Anki flashcards from a URL"
+      "org.opencontainers.image.created": "{{.Date}}"
+      "org.opencontainers.image.name": "{{.ProjectName}}"
+      "org.opencontainers.image.revision": "{{.FullCommit}}"
+      "org.opencontainers.image.version": "{{.Version}}"
+      "org.opencontainers.image.source": "{{.GitURL}}"
+      "org.opencontainers.image.authors": "James Tooze https://github.com/toozej/"
+      "org.opencontainers.image.documentation": "https://raw.githubusercontent.com/toozej/url2anki/main/README.md"
+      "org.opencontainers.image.licenses": "GPL-3.0-only"
+      "org.opencontainers.image.title": "{{.ProjectName}}"
+      "org.opencontainers.image.vendor": "James Tooze"
+    annotations:
+      "index,manifest:org.opencontainers.image.authors": "James Tooze https://github.com/toozej/"
+      "index,manifest:org.opencontainers.image.created": "{{.Date}}"
+      "index,manifest:org.opencontainers.image.description": "Generate Anki flashcards from\
+        \ a URL"
+      "index,manifest:org.opencontainers.image.documentation": "https://raw.githubusercontent.com/toozej/url2anki/main/README.md"
+      "index,manifest:org.opencontainers.image.licenses": "GPL-3.0-only"
+      "index,manifest:org.opencontainers.image.revision": "{{.FullCommit}}"
+      "index,manifest:org.opencontainers.image.source": "https://github.com/toozej/url2anki"
+      "index,manifest:org.opencontainers.image.title": "{{.ProjectName}}"
+      "index,manifest:org.opencontainers.image.vendor": "James Tooze"
+      "index,manifest:org.opencontainers.image.version": "{{.Version}}"
     extra_files:
       - scripts/goreleaser_entrypoint.sh
 
-docker_manifests:
-  # tagged
-  - name_template: 'toozej/url2anki:{{ .Tag }}'
-    image_templates:
-      - 'toozej/url2anki:{{ .Tag }}-amd64'
-      - 'toozej/url2anki:{{ .Tag }}-arm64'
-  - name_template: 'ghcr.io/toozej/url2anki:{{ .Tag }}'
-    image_templates:
-      - 'ghcr.io/toozej/url2anki:{{ .Tag }}-amd64'
-      - 'ghcr.io/toozej/url2anki:{{ .Tag }}-arm64'
-  - name_template: 'quay.io/toozej/url2anki:{{ .Tag }}'
-    image_templates:
-      - 'quay.io/toozej/url2anki:{{ .Tag }}-amd64'
-      - 'quay.io/toozej/url2anki:{{ .Tag }}-arm64'
-  - name_template: 'toozej/url2anki:{{ .Tag }}-distroless'
-    image_templates:
-      - 'toozej/url2anki:{{ .Tag }}-distroless-amd64'
-      - 'toozej/url2anki:{{ .Tag }}-distroless-arm64'
-  - name_template: 'ghcr.io/toozej/url2anki:{{ .Tag }}-distroless'
-    image_templates:
-      - 'ghcr.io/toozej/url2anki:{{ .Tag }}-distroless-amd64'
-      - 'ghcr.io/toozej/url2anki:{{ .Tag }}-distroless-arm64'
-  - name_template: 'quay.io/toozej/url2anki:{{ .Tag }}-distroless'
-    image_templates:
-      - 'quay.io/toozej/url2anki:{{ .Tag }}-distroless-amd64'
-      - 'quay.io/toozej/url2anki:{{ .Tag }}-distroless-arm64'
-  # latest
-  - name_template: 'toozej/url2anki:latest'
-    image_templates:
-      - 'toozej/url2anki:{{ .Tag }}-amd64'
-      - 'toozej/url2anki:{{ .Tag }}-arm64'
-  - name_template: 'ghcr.io/toozej/url2anki:latest'
-    image_templates:
-      - 'ghcr.io/toozej/url2anki:{{ .Tag }}-amd64'
-      - 'ghcr.io/toozej/url2anki:{{ .Tag }}-arm64'
-  - name_template: 'quay.io/toozej/url2anki:latest'
-    image_templates:
-      - 'quay.io/toozej/url2anki:{{ .Tag }}-amd64'
-      - 'quay.io/toozej/url2anki:{{ .Tag }}-arm64'
-  # distroless
-  - name_template: 'toozej/url2anki:distroless'
-    image_templates:
-      - 'toozej/url2anki:{{ .Tag }}-distroless-amd64'
-      - 'toozej/url2anki:{{ .Tag }}-distroless-arm64'
-  - name_template: 'ghcr.io/toozej/url2anki:distroless'
-    image_templates:
-      - 'ghcr.io/toozej/url2anki:{{ .Tag }}-distroless-amd64'
-      - 'ghcr.io/toozej/url2anki:{{ .Tag }}-distroless-arm64'
-  - name_template: 'quay.io/toozej/url2anki:distroless'
-    image_templates:
-      - 'quay.io/toozej/url2anki:{{ .Tag }}-distroless-amd64'
-      - 'quay.io/toozej/url2anki:{{ .Tag }}-distroless-arm64'
+
 
 archives:
   - name_template: >-
@@ -273,6 +221,30 @@ nfpms:
       lintian_overrides:
         - statically-linked-binary
         - changelog-file-missing-in-native-package
+
+homebrew_casks:
+  - name: url2anki
+    homepage: https://github.com/toozej/url2anki
+    description: "Generate Anki flashcards from a URL"
+    license: GPLv3
+    repository:
+      owner: toozej
+      name: homebrew-tap
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
+    manpages:
+      - "man/url2anki.1.gz"
+    completions:
+      bash: "completions/url2anki.bash"
+      zsh: "completions/url2anki.zsh"
+      fish: "completions/url2anki.fish"
+    url:
+      verified: "github.com/toozej/url2anki/releases/download"
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/url2anki"]
+          end
 
 sboms:
   - artifacts: archive
