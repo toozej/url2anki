@@ -232,7 +232,7 @@ homebrew_casks:
       name: homebrew-tap
       token: "{{ .Env.TAP_GITHUB_TOKEN }}"
     manpages:
-      - "man/url2anki.1.gz"
+      - "manpages/url2anki.1.gz"
     completions:
       bash: "completions/url2anki.bash"
       zsh: "completions/url2anki.zsh"
