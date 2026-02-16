@@ -30,5 +30,7 @@ RUN CGO_ENABLED=0 go build -ldflags="${LDFLAGS}"
 FROM scratch
 # Copy our static executable.
 COPY --from=build /go/url2anki/url2anki /go/bin/url2anki
+# non-root user
+USER non-root
 # Run the binary.
 ENTRYPOINT ["/go/bin/url2anki"]

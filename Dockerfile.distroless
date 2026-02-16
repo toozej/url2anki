@@ -27,5 +27,6 @@ FROM gcr.io/distroless/static-debian12:latest
 COPY --from=build /go/url2anki/url2anki /go/bin/url2anki
 # Expose port for publishing as web service
 # EXPOSE 8080
+USER non-root
 # Run the binary.
 ENTRYPOINT ["/go/bin/url2anki"]
