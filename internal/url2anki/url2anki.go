@@ -146,7 +146,7 @@ func exportFlashcardsToJSONFile(flashcards []Flashcard, filename string) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(filename, data, 0600)
+	return os.WriteFile(filename, data, 0600) // #nosec G304 G703 -- filename from user CLI arg, expected
 }
 
 // exportFlashcardsToCSVFile exports the flashcards to a JSON file
