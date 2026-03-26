@@ -115,11 +115,11 @@ local-iterate: ## Run `make local-build local-run` via `air` any time a .go or .
 
 local-release-test: ## Build assets and test goreleaser config using locally installed golang toolchain and goreleaser
 	goreleaser check
-	goreleaser build --rm-dist --snapshot
+	goreleaser build --clean --snapshot
 
 local-release: local-test docker-login ## Release assets using locally installed golang toolchain and goreleaser
 	if test -e $(CURDIR)/url2anki.key && test -e $(CURDIR)/.env; then \
-		export `cat $(CURDIR)/.env | xargs` && goreleaser release --rm-dist; \
+		export `cat $(CURDIR)/.env | xargs` && goreleaser release --clean; \
 	else \
 		echo "no cosign private key found at $(CURDIR)/url2anki.key. Cannot release."; \
 	fi
