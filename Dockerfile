@@ -22,7 +22,7 @@ FROM init AS build
 ARG LDFLAGS
 
 # Install coreutils for sleep and other utilities utilized in devcontainer
-RUN apt-get update && apt-get install --no-install-recommends -y coreutils=9.1-1
+RUN apt-get update && apt-get install --no-install-recommends -y coreutils
 
 RUN CGO_ENABLED=0 go build -ldflags="${LDFLAGS}"
 
