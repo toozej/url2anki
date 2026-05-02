@@ -1,5 +1,5 @@
 # setup project and deps
-FROM golang:1.26-bookworm AS init
+FROM golang:1.26-trixie AS init
 
 WORKDIR /go/url2anki/
 
@@ -31,6 +31,6 @@ FROM scratch
 # Copy our static executable.
 COPY --from=build /go/url2anki/url2anki /go/bin/url2anki
 # non-root user
-USER non-root
+USER nonroot
 # Run the binary.
 ENTRYPOINT ["/go/bin/url2anki"]
