@@ -27,12 +27,12 @@ builds:
       - darwin
       - windows
     goarch:
-      - "386"
+      - '386'
       - amd64
       - arm
       - arm64
     goarm:
-      - "7"
+      - '7'
     ignore:
       - goos: windows
         goarch: arm
@@ -40,8 +40,13 @@ builds:
     flags:
       - -trimpath
     ldflags:
-      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{ .CommitDate
-        }} -X main.builtBy=goreleaser
+      - >-
+        -s -w
+        -X github.com/toozej/url2anki/pkg/version.Version={{.Version}}
+        -X github.com/toozej/url2anki/pkg/version.Commit={{.Commit}}
+        -X github.com/toozej/url2anki/pkg/version.Branch={{.Branch}}
+        -X github.com/toozej/url2anki/pkg/version.BuiltAt={{.CommitDate}}
+        -X github.com/toozej/url2anki/pkg/version.Builder=goreleaser
     main: ./
     binary: url2anki
 
@@ -49,7 +54,7 @@ universal_binaries:
   - replace: false
 
 checksum:
-  name_template: 'checksums.txt'
+  name_template: checksums.txt
 
 changelog:
   sort: asc
@@ -57,24 +62,24 @@ changelog:
   filters:
     exclude:
       - '^test:'
-      - '^chore'
-      - 'merge conflict'
+      - ^chore
+      - merge conflict
       - Merge pull request
       - Merge remote-tracking branch
       - Merge branch
       - go mod tidy
   groups:
     - title: Dependency updates
-      regexp: "^.*feat\\(deps\\)*:+.*$"
+      regexp: ^.*feat\(deps\)*:+.*$
       order: 300
-    - title: 'New Features'
-      regexp: "^.*feat[(\\w)]*:+.*$"
+    - title: New Features
+      regexp: ^.*feat[(\w)]*:+.*$
       order: 100
-    - title: 'Bug fixes'
-      regexp: "^.*fix[(\\w)]*:+.*$"
+    - title: Bug fixes
+      regexp: ^.*fix[(\w)]*:+.*$
       order: 200
-    - title: 'Documentation updates'
-      regexp: "^.*docs[(\\w)]*:+.*$"
+    - title: Documentation updates
+      regexp: ^.*docs[(\w)]*:+.*$
       order: 400
     - title: Other work
       order: 9999
@@ -82,88 +87,86 @@ changelog:
 dockers_v2:
   - id: url2anki
     images:
-      - 'toozej/url2anki'
-      - 'ghcr.io/toozej/url2anki'
-      - 'quay.io/toozej/url2anki'
+      - toozej/url2anki
+      - ghcr.io/toozej/url2anki
+      - quay.io/toozej/url2anki
     tags:
       - '{{ if ne (envOrDefault "GORELEASER_DOCKER_REFRESH" "false") "true" }}v{{ .Version
         }}{{ end }}'
       - '{{ if ne (envOrDefault "GORELEASER_DOCKER_REFRESH" "false") "true" }}{{ .Version
         }}{{ end }}'
-      - "latest"
+      - latest
     dockerfile: Dockerfile.goreleaser
     labels:
-      "io.artifacthub.package.readme-url": "https://raw.githubusercontent.com/toozej/url2anki/main/README.md"
-      "io.artifacthub.package.maintainers": "[{\"name\":\"toozej\"}]"
-      "io.artifacthub.package.license": "GPLv3"
-      "org.opencontainers.image.description": "Generate Anki flashcards from a URL"
-      "org.opencontainers.image.created": "{{.Date}}"
-      "org.opencontainers.image.name": "{{.ProjectName}}"
-      "org.opencontainers.image.revision": "{{.FullCommit}}"
-      "org.opencontainers.image.version": "{{.Version}}"
-      "org.opencontainers.image.source": "{{.GitURL}}"
-      "org.opencontainers.image.authors": "James Tooze https://github.com/toozej/"
-      "org.opencontainers.image.documentation": "https://raw.githubusercontent.com/toozej/url2anki/main/README.md"
-      "org.opencontainers.image.licenses": "GPL-3.0-only"
-      "org.opencontainers.image.title": "{{.ProjectName}}"
-      "org.opencontainers.image.vendor": "James Tooze"
+      io.artifacthub.package.readme-url: https://raw.githubusercontent.com/toozej/url2anki/main/README.md
+      io.artifacthub.package.maintainers: '[{"name":"toozej"}]'
+      io.artifacthub.package.license: GPLv3
+      org.opencontainers.image.description: Generate Anki flashcards from a URL
+      org.opencontainers.image.created: '{{.Date}}'
+      org.opencontainers.image.name: '{{.ProjectName}}'
+      org.opencontainers.image.revision: '{{.FullCommit}}'
+      org.opencontainers.image.version: '{{.Version}}'
+      org.opencontainers.image.source: '{{.GitURL}}'
+      org.opencontainers.image.authors: James Tooze https://github.com/toozej/
+      org.opencontainers.image.documentation: https://raw.githubusercontent.com/toozej/url2anki/main/README.md
+      org.opencontainers.image.licenses: GPL-3.0-only
+      org.opencontainers.image.title: '{{.ProjectName}}'
+      org.opencontainers.image.vendor: James Tooze
     annotations:
-      "index,manifest:org.opencontainers.image.authors": "James Tooze https://github.com/toozej/"
-      "index,manifest:org.opencontainers.image.created": "{{.Date}}"
-      "index,manifest:org.opencontainers.image.description": "Generate Anki flashcards from\
-        \ a URL"
-      "index,manifest:org.opencontainers.image.documentation": "https://raw.githubusercontent.com/toozej/url2anki/main/README.md"
-      "index,manifest:org.opencontainers.image.licenses": "GPL-3.0-only"
-      "index,manifest:org.opencontainers.image.revision": "{{.FullCommit}}"
-      "index,manifest:org.opencontainers.image.source": "https://github.com/toozej/url2anki"
-      "index,manifest:org.opencontainers.image.title": "{{.ProjectName}}"
-      "index,manifest:org.opencontainers.image.vendor": "James Tooze"
-      "index,manifest:org.opencontainers.image.version": "{{.Version}}"
+      index,manifest:org.opencontainers.image.authors: James Tooze https://github.com/toozej/
+      index,manifest:org.opencontainers.image.created: '{{.Date}}'
+      index,manifest:org.opencontainers.image.description: Generate Anki flashcards from a
+        URL
+      index,manifest:org.opencontainers.image.documentation: https://raw.githubusercontent.com/toozej/url2anki/main/README.md
+      index,manifest:org.opencontainers.image.licenses: GPL-3.0-only
+      index,manifest:org.opencontainers.image.revision: '{{.FullCommit}}'
+      index,manifest:org.opencontainers.image.source: https://github.com/toozej/url2anki
+      index,manifest:org.opencontainers.image.title: '{{.ProjectName}}'
+      index,manifest:org.opencontainers.image.vendor: James Tooze
+      index,manifest:org.opencontainers.image.version: '{{.Version}}'
     extra_files:
       - scripts/goreleaser_entrypoint.sh
   - id: url2anki-distroless
     images:
-      - 'toozej/url2anki'
-      - 'ghcr.io/toozej/url2anki'
-      - 'quay.io/toozej/url2anki'
+      - toozej/url2anki
+      - ghcr.io/toozej/url2anki
+      - quay.io/toozej/url2anki
     tags:
       - '{{ if ne (envOrDefault "GORELEASER_DOCKER_REFRESH" "false") "true" }}v{{ .Version
         }}-distroless{{ end }}'
       - '{{ if ne (envOrDefault "GORELEASER_DOCKER_REFRESH" "false") "true" }}{{ .Version
         }}-distroless{{ end }}'
-      - "distroless"
+      - distroless
     dockerfile: Dockerfile.goreleaser.distroless
     labels:
-      "io.artifacthub.package.readme-url": "https://raw.githubusercontent.com/toozej/url2anki/main/README.md"
-      "io.artifacthub.package.maintainers": "[{\"name\":\"toozej\"}]"
-      "io.artifacthub.package.license": "GPLv3"
-      "org.opencontainers.image.description": "Generate Anki flashcards from a URL"
-      "org.opencontainers.image.created": "{{.Date}}"
-      "org.opencontainers.image.name": "{{.ProjectName}}"
-      "org.opencontainers.image.revision": "{{.FullCommit}}"
-      "org.opencontainers.image.version": "{{.Version}}"
-      "org.opencontainers.image.source": "{{.GitURL}}"
-      "org.opencontainers.image.authors": "James Tooze https://github.com/toozej/"
-      "org.opencontainers.image.documentation": "https://raw.githubusercontent.com/toozej/url2anki/main/README.md"
-      "org.opencontainers.image.licenses": "GPL-3.0-only"
-      "org.opencontainers.image.title": "{{.ProjectName}}"
-      "org.opencontainers.image.vendor": "James Tooze"
+      io.artifacthub.package.readme-url: https://raw.githubusercontent.com/toozej/url2anki/main/README.md
+      io.artifacthub.package.maintainers: '[{"name":"toozej"}]'
+      io.artifacthub.package.license: GPLv3
+      org.opencontainers.image.description: Generate Anki flashcards from a URL
+      org.opencontainers.image.created: '{{.Date}}'
+      org.opencontainers.image.name: '{{.ProjectName}}'
+      org.opencontainers.image.revision: '{{.FullCommit}}'
+      org.opencontainers.image.version: '{{.Version}}'
+      org.opencontainers.image.source: '{{.GitURL}}'
+      org.opencontainers.image.authors: James Tooze https://github.com/toozej/
+      org.opencontainers.image.documentation: https://raw.githubusercontent.com/toozej/url2anki/main/README.md
+      org.opencontainers.image.licenses: GPL-3.0-only
+      org.opencontainers.image.title: '{{.ProjectName}}'
+      org.opencontainers.image.vendor: James Tooze
     annotations:
-      "index,manifest:org.opencontainers.image.authors": "James Tooze https://github.com/toozej/"
-      "index,manifest:org.opencontainers.image.created": "{{.Date}}"
-      "index,manifest:org.opencontainers.image.description": "Generate Anki flashcards from\
-        \ a URL"
-      "index,manifest:org.opencontainers.image.documentation": "https://raw.githubusercontent.com/toozej/url2anki/main/README.md"
-      "index,manifest:org.opencontainers.image.licenses": "GPL-3.0-only"
-      "index,manifest:org.opencontainers.image.revision": "{{.FullCommit}}"
-      "index,manifest:org.opencontainers.image.source": "https://github.com/toozej/url2anki"
-      "index,manifest:org.opencontainers.image.title": "{{.ProjectName}}"
-      "index,manifest:org.opencontainers.image.vendor": "James Tooze"
-      "index,manifest:org.opencontainers.image.version": "{{.Version}}"
+      index,manifest:org.opencontainers.image.authors: James Tooze https://github.com/toozej/
+      index,manifest:org.opencontainers.image.created: '{{.Date}}'
+      index,manifest:org.opencontainers.image.description: Generate Anki flashcards from a
+        URL
+      index,manifest:org.opencontainers.image.documentation: https://raw.githubusercontent.com/toozej/url2anki/main/README.md
+      index,manifest:org.opencontainers.image.licenses: GPL-3.0-only
+      index,manifest:org.opencontainers.image.revision: '{{.FullCommit}}'
+      index,manifest:org.opencontainers.image.source: https://github.com/toozej/url2anki
+      index,manifest:org.opencontainers.image.title: '{{.ProjectName}}'
+      index,manifest:org.opencontainers.image.vendor: James Tooze
+      index,manifest:org.opencontainers.image.version: '{{.Version}}'
     extra_files:
       - scripts/goreleaser_entrypoint.sh
-
-
 
 archives:
   - name_template: >-
@@ -174,7 +177,7 @@ archives:
       {{- else }}{{ .Arch }}{{ end }}
     format_overrides:
       - goos: windows
-        formats: ['zip']
+        formats: [zip]
     files:
       - README.md
       - LICENSE
@@ -229,20 +232,20 @@ nfpms:
 homebrew_casks:
   - name: url2anki
     homepage: https://github.com/toozej/url2anki
-    description: "Generate Anki flashcards from a URL"
+    description: Generate Anki flashcards from a URL
     license: GPLv3
     repository:
       owner: toozej
       name: homebrew-tap
-      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
+      token: '{{ .Env.TAP_GITHUB_TOKEN }}'
     manpages:
-      - "manpages/url2anki.1.gz"
+      - manpages/url2anki.1.gz
     completions:
-      bash: "completions/url2anki.bash"
-      zsh: "completions/url2anki.zsh"
-      fish: "completions/url2anki.fish"
+      bash: completions/url2anki.bash
+      zsh: completions/url2anki.zsh
+      fish: completions/url2anki.fish
     url:
-      verified: "github.com/toozej/url2anki/releases/download"
+      verified: github.com/toozej/url2anki/releases/download
     hooks:
       post:
         install: |
@@ -255,14 +258,13 @@ sboms:
 
 signs:
   - cmd: cosign
-    stdin: '{{ .Env.COSIGN_PASSWORD }}'
     output: true
+    signature: ${artifact}.sigstore.json
     args:
-      - 'sign-blob'
-      - '--key=env://COSIGN_PRIVATE_KEY'
-      - '--yes'
-      - '--output-signature=${signature}'
-      - '${artifact}'
+      - sign-blob
+      - --bundle=${signature}
+      - ${artifact}
+      - --yes
     artifacts: all
 
 docker_signs:
@@ -271,10 +273,10 @@ docker_signs:
     stdin: '{{ .Env.COSIGN_PASSWORD }}'
     output: true
     args:
-      - 'sign'
-      - '--key=env://COSIGN_PRIVATE_KEY'
-      - '--yes'
-      - '${artifact}'
+      - sign
+      - --key=env://COSIGN_PRIVATE_KEY
+      - --yes
+      - ${artifact}
 
 milestones:
   - close: true

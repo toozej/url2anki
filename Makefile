@@ -55,7 +55,7 @@ pre-reqs: pre-commit-install ## Install pre-commit hooks and necessary binaries
 vet: ## Run `go vet` in Docker
 	docker build --target vet -f $(CURDIR)/Dockerfile -t $(IMAGE_AUTHOR)/$(IMAGE_NAME):$(IMAGE_TAG) . 
 
-test: ## Run `go test` in Docker
+test: ## Run `go test` with race detection in Docker
 	docker build --progress=plain --target test -f $(CURDIR)/Dockerfile -t $(IMAGE_AUTHOR)/$(IMAGE_NAME):$(IMAGE_TAG) .
 
 build: ## Build Docker image, including running tests
