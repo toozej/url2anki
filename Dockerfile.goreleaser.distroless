@@ -4,6 +4,6 @@ FROM gcr.io/distroless/static-debian13:nonroot
 ARG TARGETPLATFORM
 COPY $TARGETPLATFORM/url2anki /go/bin/url2anki
 # Expose port for publishing as web service
-# EXPOSE 8080
+# EXPOSE 8081
 # Run the binary.
 ENTRYPOINT ["/go/bin/url2anki"]

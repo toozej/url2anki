@@ -1,5 +1,4 @@
 ---
-version: "3"
 services:
   url2anki:
     container_name: url2anki

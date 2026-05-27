@@ -34,6 +34,9 @@ IMAGE_AUTHOR = toozej
 IMAGE_NAME = url2anki
 IMAGE_TAG = latest
 
+# Demo directory
+DEMO_DIR = $(CURDIR)/demo
+
 # Detect the OS and architecture
 OS := $(shell uname -s)
 ARCH := $(shell uname -m)
@@ -45,21 +48,40 @@ else
 	OPENER=open
 endif
 
-.PHONY: all vet test build verify run up down distroless-build distroless-run install local local-vet local-test local-cover local-run local-kill local-iterate local-release-test local-release local-sign local-verify local-release-verify local-install get-cosign-pub-key docker-login pre-commit-install pre-commit-run pre-commit pre-reqs update-golang-version upload-secrets-to-gh upload-secrets-envfile-to-1pass docs diagrams mutation-test test-changed watch-test profile-cpu profile-mem profile-all benchmark clean help
+.PHONY: all vet test build release verify run up down distroless-build distroless-run install local local-vet local-test local-cover local-run local-kill local-iterate local-release-test local-release local-sign local-verify local-release-verify local-install get-cosign-pub-key docker-login pre-commit-install pre-commit-run pre-commit pre-reqs update-golang-version upload-secrets-to-gh upload-secrets-envfile-to-1pass docs diagrams mutation-test test-changed watch-test profile-cpu profile-mem profile-all benchmark clean help
 
-all: vet pre-commit clean test build verify run ## Run default workflow via Docker
-local: local-update-deps local-vendor local-vet pre-commit clean local-test local-cover local-build local-sign local-verify local-kill local-run ## Run default workflow using locally installed Golang toolchain
+all: vet pre-commit clean test build release verify ## Run default workflow via Docker
+local: local-update-deps local-vendor local-vet pre-commit clean local-test local-cover local-build local-release-test ## Run default workflow using locally installed Golang toolchain
 local-release-verify: local-release local-sign local-verify ## Release and verify using locally installed Golang toolchain
 pre-reqs: pre-commit-install ## Install pre-commit hooks and necessary binaries
 
 vet: ## Run `go vet` in Docker
-	docker build --target vet -f $(CURDIR)/Dockerfile -t $(IMAGE_AUTHOR)/$(IMAGE_NAME):$(IMAGE_TAG) . 
+	docker build --target vet -f $(CURDIR)/Dockerfile -t $(IMAGE_AUTHOR)/$(IMAGE_NAME):$(IMAGE_TAG) .
 
 test: ## Run `go test` with race detection in Docker
 	docker build --progress=plain --target test -f $(CURDIR)/Dockerfile -t $(IMAGE_AUTHOR)/$(IMAGE_NAME):$(IMAGE_TAG) .
 
 build: ## Build Docker image, including running tests
-	docker build -f $(CURDIR)/Dockerfile -t $(IMAGE_AUTHOR)/$(IMAGE_NAME):$(IMAGE_TAG) .
+	docker build -f $(CURDIR)/Dockerfile \
+		--build-arg VERSION=$(or $(VERSION),unknown) \
+		--build-arg COMMIT=$(or $(COMMIT),unknown) \
+		--build-arg BRANCH=$(or $(BRANCH),unknown) \
+		--build-arg BUILT_AT=$(NOW) \
+		--build-arg BUILDER=$(BUILDER) \
+		-t $(IMAGE_AUTHOR)/$(IMAGE_NAME):$(IMAGE_TAG) .
+
+release: ## Build and sign Docker image
+	if test -e $(CURDIR)/.env; then \
+		export `cat $(CURDIR)/.env | xargs`; \
+		export GORELEASER_DOCKER_REFRESH=true; \
+		export GORELEASER_CURRENT_TAG=latest; \
+		export GORELEASER_ATTESTATION_DISABLE=true; \
+		export GORELEASER_DEBUG=true; \
+		export BUILDX_BUILDER=containerd-builder; \
+		goreleaser release --clean --skip=announce,archive,before,homebrew,nfpm,sbom,sign,validate; \
+	else \
+		echo "No environment variables found at $(CURDIR)/.env. Cannot release."; \
+	fi
 
 get-cosign-pub-key: ## Get url2anki Cosign public key from GitHub
 	test -f $(CURDIR)/url2anki.pub || curl --silent https://raw.githubusercontent.com/toozej/url2anki/main/url2anki.pub -O
@@ -80,10 +102,49 @@ down: ## Stop running Docker Compose project
 	docker compose -f docker-compose.yml down --remove-orphans
 
 distroless-build: ## Build Docker image using distroless as final base
-	docker build -f $(CURDIR)/Dockerfile.distroless -t $(IMAGE_AUTHOR)/$(IMAGE_NAME):$(IMAGE_TAG) . 
+	docker build -f $(CURDIR)/Dockerfile.distroless \
+		--build-arg VERSION=$(or $(VERSION),unknown) \
+		--build-arg COMMIT=$(or $(COMMIT),unknown) \
+		--build-arg BRANCH=$(or $(BRANCH),unknown) \
+		--build-arg BUILT_AT=$(NOW) \
+		--build-arg BUILDER=$(BUILDER) \
+		-t $(IMAGE_AUTHOR)/$(IMAGE_NAME):$(IMAGE_TAG)-distroless .
 
 distroless-run: ## Run built Docker image using distroless as final base
-	docker run --rm --name url2anki --env-file $(CURDIR)/.env $(IMAGE_AUTHOR)/$(IMAGE_NAME):$(IMAGE_TAG)
+	docker run --rm --name url2anki --env-file $(CURDIR)/.env $(IMAGE_AUTHOR)/$(IMAGE_NAME):$(IMAGE_TAG)-distroless
+
+install: ## Install url2anki from latest GitHub release
+	if command -v go; then \
+			go install github.com/toozej/url2anki@latest ; \
+	else \
+			echo "Downloading url2anki binary for $(OS)-$(ARCH)..."; \
+			mkdir -p $(CURDIR)/tmp; \
+			curl --silent -L -o $(CURDIR)/tmp/url2anki.tgz $(LATEST_RELEASE_URL); \
+			tar -xzf $(CURDIR)/tmp/url2anki.tgz -C $(CURDIR)/tmp/; \
+			chmod +x $(CURDIR)/tmp/url2anki; \
+			sudo mv $(CURDIR)/tmp/url2anki /usr/local/bin/url2anki; \
+			rm -rf $(CURDIR)/tmp; \
+	fi
+
+upload-secrets-to-gh: ## Upload secrets from .env file to GitHub Actions Secrets + Dependabot
+	$(CURDIR)/scripts/upload_secrets_to_github.sh url2anki 
+
+upload-secrets-envfile-to-1pass: ## Upload secrets and .env file to 1Password
+	$(CURDIR)/scripts/upload_secrets_to_1password secrets url2anki
+	$(CURDIR)/scripts/upload_secrets_to_1password envfile url2anki
+
+docker-login: ## Login to Docker registries used to publish images to
+	if test -e $(CURDIR)/.env; then \
+		export `cat $(CURDIR)/.env | xargs`; \
+		export DOCKER_CONFIG=$$(mktemp -d); \
+		mkdir -p $${DOCKER_CONFIG}; \
+		DOCKERHUB_AUTH=$$(echo -n "$${DOCKERHUB_USERNAME}:$${DOCKERHUB_TOKEN}" | base64); \
+		QUAY_AUTH=$$(echo -n "$${QUAY_USERNAME}:$${QUAY_TOKEN}" | base64); \
+		GHCR_AUTH=$$(echo -n "$${GITHUB_USERNAME}:$${GH_GHCR_TOKEN}" | base64); \
+		printf '{"credsStore":"","credHelpers":{},"auths":{"index.docker.io":{"auth":"%s"},"quay.io":{"auth":"%s"},"ghcr.io":{"auth":"%s"}}}\n' "$$DOCKERHUB_AUTH" "$$QUAY_AUTH" "$$GHCR_AUTH" > $${DOCKER_CONFIG}/config.json; \
+	else \
+		echo "No container registry credentials found, need to add them to ./.env. See README.md for more info"; \
+	fi
 
 local-update-deps: ## Run `go get -t -u ./...` to update Go module dependencies
 	go get -t -u ./...
@@ -133,48 +194,18 @@ local-release: local-test docker-login ## Release assets using locally installed
 
 local-sign: local-test ## Sign locally installed golang toolchain and cosign
 	if test -e $(CURDIR)/url2anki.key && test -e $(CURDIR)/.env; then \
-		export `cat $(CURDIR)/.env | xargs` && cosign sign-blob --key=$(CURDIR)/url2anki.key --output-signature=$(CURDIR)/url2anki.sig $(CURDIR)/out/url2anki; \
+		export `cat $(CURDIR)/.env | xargs` && cosign sign-blob --key=$(CURDIR)/url2anki.key --bundle=$(CURDIR)/url2anki.bundle $(CURDIR)/out/url2anki; \
 	else \
 		echo "no cosign private key found at $(CURDIR)/url2anki.key. Cannot release."; \
 	fi
 
 local-verify: get-cosign-pub-key ## Verify locally compiled binary
 	# cosign here assumes you're using Linux AMD64 binary
-	cosign verify-blob --key $(CURDIR)/url2anki.pub --signature $(CURDIR)/url2anki.sig $(CURDIR)/out/url2anki
+	cosign verify-blob --key $(CURDIR)/url2anki.pub --bundle $(CURDIR)/url2anki.bundle $(CURDIR)/out/url2anki
 
 local-install: local-build local-verify ## Install compiled binary to local machine
 	sudo cp $(CURDIR)/out/url2anki /usr/local/bin/url2anki
 	sudo chmod 0755 /usr/local/bin/url2anki
-
-install: ## Install url2anki from latest GitHub release
-	if command -v go; then \
-			go install github.com/toozej/url2anki@latest ; \
-	else \
-			echo "Downloading url2anki binary for $(OS)-$(ARCH)..."; \
-			mkdir -p $(CURDIR)/tmp; \
-			curl --silent -L -o $(CURDIR)/tmp/url2anki.tgz $(LATEST_RELEASE_URL); \
-			tar -xzf $(CURDIR)/tmp/url2anki.tgz -C $(CURDIR)/tmp/; \
-			chmod +x $(CURDIR)/tmp/url2anki; \
-			sudo mv $(CURDIR)/tmp/url2anki /usr/local/bin/url2anki; \
-			rm -rf $(CURDIR)/tmp; \
-	fi
-
-upload-secrets-to-gh: ## Upload secrets from .env file to GitHub Actions Secrets + Dependabot
-	$(CURDIR)/scripts/upload_secrets_to_github.sh url2anki 
-
-upload-secrets-envfile-to-1pass: ## Upload secrets and .env file to 1Password
-	$(CURDIR)/scripts/upload_secrets_to_1password secrets url2anki
-	$(CURDIR)/scripts/upload_secrets_to_1password envfile url2anki
-
-docker-login: ## Login to Docker registries used to publish images to
-	if test -e $(CURDIR)/.env; then \
-		export `cat $(CURDIR)/.env | xargs`; \
-		echo $${DOCKERHUB_TOKEN} | docker login docker.io --username $${DOCKERHUB_USERNAME} --password-stdin; \
-		echo $${QUAY_TOKEN} | docker login quay.io --username $${QUAY_USERNAME} --password-stdin; \
-		echo $${GITHUB_GHCR_TOKEN} | docker login ghcr.io --username $${GITHUB_USERNAME} --password-stdin; \
-	else \
-		echo "No container registry credentials found, need to add them to ./.env. See README.md for more info"; \
-	fi
 
 pre-commit: pre-commit-install pre-commit-run ## Install and run pre-commit hooks
 
@@ -203,7 +234,7 @@ pre-commit-install: ## Install pre-commit hooks and necessary binaries
 	# syft
 	command -v syft || curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
 	# cosign
-	go install github.com/sigstore/cosign/cmd/cosign@latest
+	command -v cosign || brew install cosign || go install github.com/sigstore/cosign/v3/cmd/cosign@latest
 	# go-licenses
 	go install github.com/google/go-licenses@latest
 	# go vuln check
@@ -212,6 +243,8 @@ pre-commit-install: ## Install pre-commit hooks and necessary binaries
 	go install github.com/air-verse/air@latest
 	# graphviz for dot
 	command -v dot || brew install graphviz || sudo apt install -y graphviz || sudo dnf install -y graphviz
+	# semgrep
+	command -v semgrep || brew install semgrep || python3 -m pip install --break-system-packages --upgrade semgrep
 	# install and update pre-commits
 	# determine if on Debian 12 and if so use pip to install more modern pre-commit version
 	grep --silent "VERSION=\"12 (bookworm)\"" /etc/os-release && apt install -y --no-install-recommends python3-pip && python3 -m pip install --break-system-packages --upgrade pre-commit || echo "OS is not Debian 12 bookworm"
@@ -237,8 +270,8 @@ docs: ## Serve Go documentation
 diagrams: ## Generate architectural diagrams using go-diagrams
 	@echo "Generating architectural diagrams..."
 	go run cmd/diagrams/main.go
-	cd ./docs/diagrams/go-diagrams && for i in $(find . -name '*.dot'); do \
-		dot -Tpng $i > ${i%.dot}.png; \
+	cd ./docs/diagrams/go-diagrams && for i in $$(find . -name '*.dot'); do \
+		dot -Tpng $$i > $${i%.dot}.png; \
 	done
 	@echo "Diagram PNGs generated in ./docs/diagrams/go-diagrams/"
 
@@ -249,10 +282,10 @@ mutation-test: ## Run mutation testing using go-gremlins
 
 test-changed: ## Run tests only for packages with changes since last commit
 	@echo "Running tests for changed packages..."
-	@CHANGED_PACKAGES=$(git diff --name-only HEAD~1 | grep '\.go$' | xargs -I {} dirname {} | sort -u | xargs -I {} go list ./{}... 2>/dev/null | grep -v 'no Go files'); \
-	if [ -n "$CHANGED_PACKAGES" ]; then \
-		echo "Testing packages: $CHANGED_PACKAGES"; \
-		go test -race -v $CHANGED_PACKAGES; \
+	@CHANGED_PACKAGES=$$(git diff --name-only HEAD~1 | grep '\.go$$' | xargs -I {} dirname {} | sort -u | xargs -I {} go list ./{}... 2>/dev/null | grep -v 'no Go files'); \
+	if [ -n "$$CHANGED_PACKAGES" ]; then \
+		echo "Testing packages: $$CHANGED_PACKAGES"; \
+		go test -race -v $$CHANGED_PACKAGES; \
 	else \
 		echo "No changed Go packages found"; \
 	fi
@@ -260,10 +293,10 @@ test-changed: ## Run tests only for packages with changes since last commit
 watch-test: ## Watch for file changes and run tests for changed packages
 	@echo "Watching for changes and running tests..."
 	@while true; do \
-		CHANGED_PACKAGES=$(git diff --name-only HEAD | grep '\.go$' | xargs -I {} dirname {} | sort -u | xargs -I {} go list ./{}... 2>/dev/null | grep -v 'no Go files'); \
-		if [ -n "$CHANGED_PACKAGES" ]; then \
-			echo "Changed packages detected: $CHANGED_PACKAGES"; \
-			go test -race -v $CHANGED_PACKAGES; \
+		CHANGED_PACKAGES=$$(git diff --name-only HEAD | grep '\.go$$' | xargs -I {} dirname {} | sort -u | xargs -I {} go list ./{}... 2>/dev/null | grep -v 'no Go files'); \
+		if [ -n "$$CHANGED_PACKAGES" ]; then \
+			echo "Changed packages detected: $$CHANGED_PACKAGES"; \
+			go test -race -v $$CHANGED_PACKAGES; \
 		fi; \
 		sleep 2; \
 	done
@@ -294,8 +327,10 @@ clean: ## Remove any locally compiled binaries, profiles, demo output, and built
 	@rm -rf $(CURDIR)/profiles/
 	@rm -rf $(CURDIR)/dist/
 	@rm -rf $(CURDIR)/c.out
+	@rm -rf $(CURDIR)/*.bundle
 	@rm -rf $(CURDIR)/manpages/
 	@rm -rf $(CURDIR)/completions/
+	@rm -rf $(DEMO_DIR)
 	-docker image rm $(IMAGE_AUTHOR)/$(IMAGE_NAME):$(IMAGE_TAG)
 
 help: ## Display help text
