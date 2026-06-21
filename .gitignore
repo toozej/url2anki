@@ -1,6 +1,4 @@
 # Cosign
-url2anki.key
-cosign.key
 *.sig
 *.bundle
 

@@ -18,6 +18,5 @@ Makefile
 Dockerfile*
 docker-compose.yml
 url2anki
-url2anki.key
 anki_*.csv
 anki_*.json
